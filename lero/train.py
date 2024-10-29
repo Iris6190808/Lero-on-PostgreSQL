@@ -1,3 +1,4 @@
+#用于解析命令行参数。
 import argparse
 import math
 
@@ -158,8 +159,13 @@ def training_pointwise(tuning_model_path, model_name, training_data_file):
     print("saving model...")
     lero_model.save(model_name)
 
-
+#确保该代码块只在直接运行脚本时执行，而在被导入时不执行。
+#具体实现了不同类型的训练逻辑，适应不同的训练需求。
 if __name__ == "__main__":
+    #创建一个命令行参数解析器，用于接收用户输入的参数。
+    #--training_data：指定训练数据的路径。
+    #metavar用于在帮助信息中显示的名称。
+    #help提供该参数的描述信息。
     parser = argparse.ArgumentParser("Model training helper")
     parser.add_argument("--training_data",
                         metavar="PATH",
@@ -168,7 +174,7 @@ if __name__ == "__main__":
     parser.add_argument("--model_name", type=str)
     parser.add_argument("--pretrain_model_name", type=str)
     parser.add_argument("--rank_score_training_type", type=int)
-
+    #解析命令行输入的参数，结果保存在args对象中。
     args = parser.parse_args()
 
     training_type = 0
@@ -195,7 +201,7 @@ if __name__ == "__main__":
     if args.rank_score_training_type is not None:
         rank_score_training_type = args.rank_score_training_type
     print("rank_score_training_type:", rank_score_training_type)
-
+    #根据训练类型选择相应的训练函数
     if training_type == 0:
         print("training_pointwise")
         training_pointwise(pretrain_model_name, model_name, training_data)

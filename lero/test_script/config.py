@@ -1,5 +1,5 @@
 # Postgresql conf (Please configure it according to your situation)
-PORT = 54321
+PORT = 5432
 HOST = "localhost"
 USER = "postgres"
 PASSWORD = "postgres"
