@@ -5,21 +5,25 @@ class CardPicker():
         self.table_arr = table_arr
 
         # Mapping the number of table in sub-query to the index of its cardinality in rows_arr
+        #table_arr索引等同rows_arr索引
         self.table_num_2_card_idx_dict = {}
         for i, tables in enumerate(self.table_arr):
             table_num = len(tables)
             if table_num not in self.table_num_2_card_idx_dict:
                 self.table_num_2_card_idx_dict[table_num] = []
             self.table_num_2_card_idx_dict[table_num].append(i)
+        # 获取子查询中表数最多的table_arr索引
         self.max_table_num = max(self.table_num_2_card_idx_dict.keys())
 
         # Each time we will adjust all the cardinalities of sub-queries in the same group (group by the number of table here)
         # And adjust according to the number of tables from more to less, 
         # because the more complex the execution plan is, the more likely it is to produce wrong estimates on cardinality
+        # 每次我们都会调整同一组子查询的所有基数(按表的数量分组)，并根据表的数量从多到少进行调整，因为执行计划越复杂，就越有可能对基数产生错误的估计
         self.cur_sub_query_table_num = self.max_table_num
         self.cur_sub_query_related_card_idx_list = self.table_num_2_card_idx_dict[self.cur_sub_query_table_num]
 
-        # create the swing factor list 
+        # create the swing factor list
+        #摆动因子
         assert swing_factor_lower_bound < swing_factor_upper_bound
         self.swing_factor_lower_bound = swing_factor_lower_bound
         self.swing_factor_upper_bound = swing_factor_upper_bound

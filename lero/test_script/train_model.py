@@ -125,7 +125,7 @@ class LeroHelper():
         run_args = []
         run_args.append("SET lero_joinest_fname TO '" + card_file_name + "'")
         return run_args
-
+    # 从基数文件中读取策略实体，按得分排序，生成基数文件，然后异步执行与这些基数相关的查询，以便评估其性能。
     def run_pairwise(self, q, fp, run_args, output_query_latency_file, exploratory_query_latency_file, pool):
         #执行查询并解释。
         explain_query(q, run_args)
@@ -148,8 +148,9 @@ class LeroHelper():
                 card_file_path = os.path.join(PG_DB_PATH, card_file_name)
                 with open(card_file_path, "w") as card_file:
                     card_file.write(card_str)
-
+                #执行 SQL 查询
                 output_file = output_query_latency_file if i == 0 else exploratory_query_latency_file
+                #添加基数信息重新查询
                 pool.apply_async(do_run_query, args=(q, fp, self.get_card_test_args(card_file_name), output_file, True, None, None))
                 i += 1
     #向 Lero 服务器发送查询计划并接收预测结果。

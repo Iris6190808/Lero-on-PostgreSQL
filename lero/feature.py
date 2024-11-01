@@ -31,6 +31,13 @@ class FeatureGenerator():
         self.normalizer = None
         self.feature_parser = None
 
+    # fit
+    # 目的: 主要用于计算和存储所需的统计信息或模型参数。这些信息将用于后续的数据转换。
+    # 功能:
+    # 在特征提取器中，fit 通常计算特征的均值、方差、最小值和最大值等统计量。
+    # 在模型中，fit 通常用于训练模型，调整模型参数以最小化损失函数。
+    # 调用时机: 一般在训练数据上调用一次，用于建立所需的基础信息。
+    # 从查询计划的树结构中提取特征并初始化标准化器。
     def fit(self, trees):
         exec_times = []
         startup_costs = []
@@ -94,6 +101,13 @@ class FeatureGenerator():
         #初始化 AnalyzeJsonParser，用于后续特征解析。
         self.feature_parser = AnalyzeJsonParser(self.normalizer, list(input_relations))
 
+    # transform
+    # 目的: 主要用于应用 fit 方法中计算得到的统计信息或模型参数，将新的数据转换为特定的格式或范围。
+    # 功能:
+    # 在特征提取器中，transform 使用 fit 中计算的统计量对输入数据进行转换，例如归一化、标准化或提取特征。
+    # 在模型中，transform 可以用于将输入数据转换为模型可接受的格式。
+    # 调用时机: 通常在处理新数据或训练数据后调用，以便将数据应用于模型或特征处理器。
+    # 处理输入的查询执行计划树，并提取特征和标签。
     def transform(self, trees):
         #特征
         local_features = []
@@ -161,7 +175,7 @@ class SampleEntity():
             trees += self.right.subtrees()
         return trees
 
-
+# 对数据进行标准化和逆标准化，将特征值缩放到相同的范围
 class Normalizer():
     def __init__(self, mins: dict, maxs: dict) -> None:
         self._mins = mins

@@ -47,6 +47,9 @@ class LeroJSONHandler(socketserver.BaseRequestHandler):
         json_obj = json.loads(json_msg)
         msg_type = json_obj['msg_type']
         reply_msg = {}
+        # 打印传入的json对象
+        formatted_data = json.dumps(json_obj, indent=4)
+        print(formatted_data)
         try:
             if msg_type == "init":
                 self._init(json_obj, reply_msg)
@@ -89,23 +92,26 @@ class LeroJSONHandler(socketserver.BaseRequestHandler):
         opt_state = OptState(card_picker, plan_card_replacer, self.server.dump_card)
         self.server.opt_state_dict[qid] = opt_state
         reply_msg['msg_type'] = "succ"
-    #利用优化器模型的预测对查询计划的基数（cardinality）进行动态调整。
+    # Lero 通过更改基数来指导优化器生成不同的计划，但在预测计划分数时，行数将用作输入特征。因此，我们需要在向模型提供之前将所有行数恢复为原始值。
     def _guided_optimization(self, json_obj, reply_msg):
         qid = json_obj['query_id']
         opt_state = self.server.opt_state_dict[qid]
         plan_card_replacer = opt_state.plan_card_replacer
-        #处理查询计划（plan）并替换其中的基数（Plan Rows）
+        #处理查询计划（plan）并将所有行数恢复为原始值
         plan_card_replacer.replace(json_obj['Plan'])
         new_json_msg = json.dumps(json_obj)
         #在 Python 中，所有的参数传递实际上是通过“对象引用”实现的。这意味着当你将一个可变对象（如列表、字典或自定义对象）作为参数传递给函数时，传递的是对象的引用，而不是对象的副本。
         #java
         #值传递：指的是参数传递的是值的副本。对于基本数据类型，传递的是其值；对于对象，传递的是对象引用的值。
         #集合类的修改：当你修改一个集合类的内容（例如添加或删除元素）时，实际上是修改了这个对象本身，因为你操作的是同一个对象的引用。因此，对象的内容会发生变化，而引用本身并没有变化。
+        #在预测计划分数时，行数将用作输入特征。
         self._predict(new_json_msg, reply_msg)
 
         if self.server.dump_card:
             signature = str(get_tree_signature(json_obj['Plan']['Plans'][0]))
             if signature not in opt_state.visited_trees:
+                # 通过更改基数来指导优化器生成不同的计划
+
                 card_list = opt_state.card_picker.get_card_list()
                 opt_state.card_list_with_score.append(([str(card) for card in card_list], reply_msg['latency']))
                 opt_state.visited_trees.add(signature)
@@ -142,7 +148,7 @@ class LeroJSONHandler(socketserver.BaseRequestHandler):
         self.server.model = None
         self.server.feature_generator = None
         reply_msg['msg_type'] = "succ"
-    #删除特定查询的状态，如果需要转储基数列表。
+    #删除特定查询的优化器状态，如果需要转储基数打分列表。
     def _remove_state(self, json_obj, reply_msg):
         qid = json_obj['query_id']
         if self.server.dump_card:
@@ -166,7 +172,8 @@ def start_server(listen_on, port, model: LeroModel):
     #socketserver.TCPServer 是一个简单的 TCP 服务器类，接收客户端的连接请求并调用指定的处理器来处理请求。
     #server 是通过 socketserver.TCPServer 创建的 TCP 服务器实例，它负责管理网络连接和请求。
     #当有客户端连接时，server 会根据定义的处理器（在这个例子中是 LeroJSONHandler）创建一个 LeroJSONHandler 的实例来处理该请求。
-
+    #在这个过程中，所有的服务器属性设置在调用 LeroJSONHandler 之前完成。
+    #LeroJSONHandler 是在有客户端连接时被创建的处理器，而属性设置是为了确保当处理请求时，server 已经具有必要的配置和状态。这种顺序确保了处理请求时可以访问到正确的服务器上下文和状态。
     with socketserver.TCPServer((listen_on, port), LeroJSONHandler) as server:
         server.model = model
         server.feature_generator = model._feature_generator if model is not None else None

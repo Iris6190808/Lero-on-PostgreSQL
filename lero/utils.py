@@ -23,7 +23,7 @@ def print_log(s, log_path, print_to_std_out=False):
     #     log_file.write(str(s) + "\n")
     if print_to_std_out:
         print(s)
-#只用row count预测计划打分
+
 # Lero guides the optimizer to generate different plans by changing cardinalities,
 # but row count will be used as the input feature when predicting the plan score.
 # So we need to restore all the row counts to the original values before feeding the model.
